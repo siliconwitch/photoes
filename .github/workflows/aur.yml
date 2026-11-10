@@ -1,0 +1,48 @@
+name: Publish to AUR
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    container: archlinux:base-devel
+    steps:
+      - name: Install tools
+        run: pacman -Syu --noconfirm git openssh pacman-contrib
+
+      - uses: actions/checkout@v7
+
+      - name: Stamp version and checksum
+        run: |
+          set -eu
+
+          # makepkg refuses to run as root.
+          useradd --create-home builder
+          sed "s/^pkgver=.*/pkgver=${GITHUB_REF_NAME#v}/" aur/PKGBUILD > /home/builder/PKGBUILD
+          chown builder /home/builder/PKGBUILD
+
+          cd /home/builder
+          sudo -u builder updpkgsums
+          sudo -u builder sh -c 'makepkg --printsrcinfo > .SRCINFO'
+
+      - name: Push to AUR
+        env:
+          AUR_SSH_PRIVATE_KEY: ${{ secrets.AUR_SSH_PRIVATE_KEY }}
+        run: |
+          set -eu
+
+          # ssh ignores $HOME inside a job container, so every path is explicit.
+          printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/aur_key"
+          chmod 600 "$RUNNER_TEMP/aur_key"
+          echo 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' > "$RUNNER_TEMP/aur_known_hosts"
+          export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/aur_key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/aur_known_hosts"
+
+          git clone ssh://aur@aur.archlinux.org/photoes.git "$RUNNER_TEMP/aur"
+          cp /home/builder/PKGBUILD /home/builder/.SRCINFO "$RUNNER_TEMP/aur"
+
+          cd "$RUNNER_TEMP/aur"
+          git add PKGBUILD .SRCINFO
+          git -c user.name=siliconwitch -c user.email=siliconwitch@users.noreply.github.com commit -m "Update to ${GITHUB_REF_NAME#v}"
+          git push origin HEAD:master
