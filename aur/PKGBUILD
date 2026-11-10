@@ -8,6 +8,11 @@ license=('GPL-3.0-or-later')
 depends=(
   'gtk4'
   'libadwaita'
+  'adwaita-icon-theme'
+  'libshumate'
+  'libsoup3'
+  'glib-networking'
+  'libheif'
   'libjxl'
   'gstreamer'
   'gst-plugins-base'

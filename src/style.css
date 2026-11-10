@@ -1,0 +1,69 @@
+/* Floating controls. GTK has no backdrop blur, so the glass is translucent only. */
+.glass {
+  padding: 4px;
+  border: 1px solid alpha(@window_fg_color, 0.1);
+  border-radius: 9999px;
+  background-color: alpha(@window_bg_color, 0.72);
+  box-shadow:
+    0 8px 28px alpha(black, 0.28),
+    inset 0 1px 0 alpha(white, 0.16);
+}
+
+/* 44 px is the smallest comfortable touch target. */
+.glass button,
+button.glass {
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border-radius: 9999px;
+}
+
+button.glass:hover {
+  background-color: alpha(@window_bg_color, 0.86);
+}
+
+button.glass:checked {
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+}
+
+.glass text {
+  margin: 0 4px 0 16px;
+}
+
+/* The first and last rows start clear of the floating controls. */
+gridview.tiles,
+gridview.entries {
+  padding-top: 76px;
+  padding-bottom: 84px;
+}
+
+gridview.tiles > child {
+  padding: 1px;
+  border-radius: 0;
+  background: none;
+}
+
+gridview.entries > child {
+  margin: 2px;
+  padding: 8px;
+  border-radius: 12px;
+}
+
+.pin {
+  border: 2px solid white;
+  border-radius: 12px;
+  background-color: alpha(@window_fg_color, 0.2);
+  box-shadow: 0 2px 8px alpha(black, 0.4);
+}
+
+.count {
+  min-width: 10px;
+  margin: 3px;
+  padding: 0 5px;
+  border-radius: 9999px;
+  background-color: @accent_bg_color;
+  color: @accent_fg_color;
+  font-size: 11px;
+  font-weight: bold;
+}
