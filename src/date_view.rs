@@ -30,7 +30,7 @@ impl DateView {
     }
 }
 
-pub fn new() -> DateView {
+pub fn new(thumbnails: &thumbnail::Store) -> DateView {
     let paths = gtk::StringList::new(&[]);
 
     // Every tile holds a square texture, so a picture as wide as its column is also as tall.
@@ -53,6 +53,7 @@ pub fn new() -> DateView {
 
     tiles.connect_bind({
         let requests = requests.clone();
+        let thumbnails = thumbnails.clone();
         move |_, item| {
             let item = item.downcast_ref::<gtk::ListItem>().expect("a list item");
             let picture = item
@@ -66,7 +67,7 @@ pub fn new() -> DateView {
 
             picture.set_paintable(Some(&placeholder));
 
-            let request = thumbnail::request(PathBuf::from(path.string()), move |texture| {
+            let request = thumbnails.request(PathBuf::from(path.string()), move |texture| {
                 picture.set_paintable(Some(texture));
             });
             requests.borrow_mut().insert(item.clone(), request);

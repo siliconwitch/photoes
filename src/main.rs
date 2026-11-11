@@ -28,9 +28,11 @@ fn main() -> glib::ExitCode {
     application.connect_activate(|application| {
         let photos = library::scan(&config::load());
 
-        let date_view = date_view::new();
-        let location_view = location_view::new();
-        let folder_view = folder_view::new();
+        let thumbnails = thumbnail::Store::new();
+
+        let date_view = date_view::new(&thumbnails);
+        let location_view = location_view::new(&thumbnails);
+        let folder_view = folder_view::new(&thumbnails);
 
         let views = gtk::Stack::builder()
             .transition_type(gtk::StackTransitionType::Crossfade)

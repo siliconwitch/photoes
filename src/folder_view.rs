@@ -39,7 +39,7 @@ impl FolderView {
     }
 }
 
-pub fn new() -> FolderView {
+pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
     let shown = Rc::new(RefCell::new(Shown {
         photos: Vec::new(),
         roots: Vec::new(),
@@ -125,6 +125,7 @@ pub fn new() -> FolderView {
 
     rows.connect_bind({
         let requests = requests.clone();
+        let thumbnails = thumbnails.clone();
         move |_, item| {
             let item = item.downcast_ref::<gtk::ListItem>().expect("a list item");
             let row = item.child().expect("a row");
@@ -153,7 +154,7 @@ pub fn new() -> FolderView {
             name.set_label(&path.file_name().unwrap_or_default().to_string_lossy());
             icon.set_icon_name(Some("image-x-generic-symbolic"));
 
-            let request = thumbnail::request(path.to_path_buf(), move |texture| {
+            let request = thumbnails.request(path.to_path_buf(), move |texture| {
                 icon.set_paintable(Some(texture));
             });
             requests.borrow_mut().insert(item.clone(), request);
