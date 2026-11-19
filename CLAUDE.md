@@ -5,7 +5,7 @@ A fast, minimal, touch-friendly, AI-assisted photos app for Linux.
 ## Documents
 
 - `docs/product.md` says what the app is and how it is used. Read it before changing behaviour. It is a fixed document. Never edit it unless the user explicitly approves that edit. It changes only when the user requests a big new feature or change.
-- `docs/design.md` records the technical decisions and the reason for each. Read the relevant section before working on a module. Update it when a decision changes. Keep it short: reasons only, never a log of the work.
+- "Decisions" below lists decisions that have no code yet. Once code implements one, delete its entry. Keep its reason as a comment only when an agent could not work it out from the code, following the comment rule in the `technical-writing` skill.
 
 ## Glossary
 
@@ -36,13 +36,33 @@ Use these terms in code, comments, docs and the interface. Never use a term from
 | cache | Data under `~/.cache` that rebuilds itself when deleted. | database |
 | config file | `~/.config/photoes/config`. | settings, preferences |
 
+## Decisions
+
+- **Sorted images are JPEG XL.** JPEG input is transcoded losslessly, so it converts back to the exact original bytes. Other formats are re-encoded.
+- **Sorted video is MP4.** H.264, HEVC and AV1 are remuxed, not re-encoded. Edits and other codecs encode to AV1 with Opus audio. Never assume a sorted `.mp4` is AV1.
+- **Each sorted file embeds a 512 px preview.** The grid draws tiles from it and never decodes a full file. Embedded, not cached, so a copied library draws at once.
+- **Metadata lives inside each file.** Images keep GPS, date and camera in Exif. AI text goes in XMP `dc:description`, the favourite in XMP `xmp:Rating`, and people names and edit settings in XMP. A metadata change never re-encodes pixels or streams.
+- **The edit panel previews on the GPU and encodes when the panel closes.** An encode takes seconds for an image and minutes for video. Preview and encode share the same correction maths, so the file matches the preview.
+
+### Not decided
+
+Ask the user before choosing any of these. Do not infer an answer from the code.
+
+- Which library decodes inbox formats when sorting. gdk-pixbuf only makes thumbnails today.
+- Whether to bundle our own icons.
+- Whether the map gets a dark style, and whether libshumate stays, since its label widgets make zooming stutter.
+- Which fields hold the embedded preview, faces and people names, and which `xmp:Rating` value means favourite.
+- Where video keeps its GPS, date and camera details. MP4 has no Exif.
+- How staged work survives a crash, and how a write avoids a half-written file that looks finished.
+- Which face model to use, and which AV1 encoder runs when the GPU has none.
+
 ## Commands
 
 direnv loads the flake's dev shell through `.envrc`, so the Rust toolchain and every library are already on `PATH`. Do not run `nix develop`.
 
 - While testing a change with the user, restart the app after each edit. Stop the running copy with `pkill -x photoes`, then start `cargo run` in the background.
 - Before finishing a change, run `cargo fmt` and `cargo clippy`.
-- `nix build` builds the package as users install it.
+- `nix build` builds the package as users install it. It sees only git-tracked files, so run `git add` on a new file first.
 
 When adding or removing a system library, change `buildInputs` in `flake.nix` and `depends` in `aur/PKGBUILD` together.
 

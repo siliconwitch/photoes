@@ -36,6 +36,8 @@ jobs:
           # ssh ignores $HOME inside a job container, so every path is explicit.
           printf '%s\n' "$AUR_SSH_PRIVATE_KEY" > "$RUNNER_TEMP/aur_key"
           chmod 600 "$RUNNER_TEMP/aur_key"
+
+          # Checked against SHA256:RFzBCUItH9LZS0cKB5UE6ceAYhBD5C8GeOBip8Z11+4, published on aur.archlinux.org, on 2026-11-10.
           echo 'aur.archlinux.org ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIEuBKrPzbawxA/k2g6NcyV5jmqwJ2s+zpgZGZ7tpLIcN' > "$RUNNER_TEMP/aur_known_hosts"
           export GIT_SSH_COMMAND="ssh -i $RUNNER_TEMP/aur_key -o IdentitiesOnly=yes -o UserKnownHostsFile=$RUNNER_TEMP/aur_known_hosts"
 
@@ -45,4 +47,5 @@ jobs:
           cd "$RUNNER_TEMP/aur"
           git add PKGBUILD .SRCINFO
           git -c user.name=siliconwitch -c user.email=siliconwitch@users.noreply.github.com commit -m "Update to ${GITHUB_REF_NAME#v}"
+          # The AUR accepts no branch but master.
           git push origin HEAD:master

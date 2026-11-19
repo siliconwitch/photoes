@@ -11,8 +11,9 @@ depends=(
   'adwaita-icon-theme'
   'libshumate'
   'libsoup3'
-  'glib-networking'
+  'glib-networking' # TLS for the map downloads
   'libheif'
+  # The sort pipeline and video will use libjxl and GStreamer. The code does not call them yet.
   'libjxl'
   'gstreamer'
   'gst-plugins-base'

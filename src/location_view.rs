@@ -80,7 +80,8 @@ pub fn new(thumbnails: &thumbnail::Store) -> LocationView {
     for index in 0..controllers.n_items() {
         let controller = controllers.item(index).expect("a controller");
 
-        // The map only pans and zooms. libshumate has no switch for its rotate gesture.
+        // The map only pans and zooms. libshumate has no switch for its rotate gesture, and removing the controller
+        // would fight libshumate's own handlers.
         if let Some(rotate) = controller.downcast_ref::<gtk::GestureRotate>() {
             rotate.set_propagation_phase(gtk::PropagationPhase::None);
         }

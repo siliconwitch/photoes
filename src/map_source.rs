@@ -228,6 +228,8 @@ pub async fn load(
 }
 
 fn renderer(index: &Value) -> Result<(shumate::VectorRenderer, TileStore), Box<dyn Error>> {
+    // OpenFreeMap's Positron style, unmodified so that a newer copy can replace it. Vector tiles let the app choose
+    // the label language, which image tiles bake in.
     let mut style: Value = serde_json::from_str(include_str!("map_style.json"))?;
 
     // libshumate cannot follow the style's link to the tile index, so the tile address goes in directly.

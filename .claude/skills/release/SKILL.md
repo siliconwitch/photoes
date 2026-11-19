@@ -55,4 +55,4 @@ The tag is the version the AUR gets. `Cargo.toml` is the version Nix gets. They 
 
 The workflow publishes `aur/PKGBUILD` but does not build it. A green run does not prove the package builds on Arch.
 
-When a run fails, read "Packaging and release" in `docs/design.md` before changing the workflow. The workflow needs the repo secret `AUR_SSH_PRIVATE_KEY`.
+When a run fails, read the comments in `.github/workflows/aur.yml` before changing it. The workflow needs the repo secret `AUR_SSH_PRIVATE_KEY`.

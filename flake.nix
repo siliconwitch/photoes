@@ -43,7 +43,8 @@
             libadwaita
             libshumate
             libsoup_3
-            glib-networking
+            glib-networking # TLS for the map downloads
+            # The sort pipeline and video will use libjxl and GStreamer. The code does not call them yet.
             libjxl
             gst_all_1.gstreamer
             gst_all_1.gst-plugins-base
