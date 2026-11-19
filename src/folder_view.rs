@@ -9,13 +9,12 @@ use gtk::{glib, pango};
 use crate::library::Photo;
 use crate::thumbnail;
 
-// Icon sizes in pixels: small, medium and large list, then small, medium and large icons.
-const ICON_SIZES: [i32; 6] = [24, 40, 64, 96, 144, 224];
-const FIRST_ICON_LEVEL: usize = 3;
+// Icon sizes in pixels: small, medium and large.
+const ICON_SIZES: [i32; 3] = [96, 144, 224];
 
 struct Shown {
-    photos: Vec<PathBuf>,
-    roots: Vec<PathBuf>,
+    photos: Vec<Photo>,
+    libraries: Vec<PathBuf>,
     directory: Option<PathBuf>,
 }
 
@@ -27,11 +26,14 @@ pub struct FolderView {
 
 impl FolderView {
     pub fn show(&self, photos: &[Photo]) {
-        let roots: BTreeSet<PathBuf> = photos.iter().map(|photo| photo.root.clone()).collect();
+        let libraries: BTreeSet<PathBuf> = photos
+            .iter()
+            .filter_map(|photo| photo.library.clone())
+            .collect();
 
         *self.shown.borrow_mut() = Shown {
-            photos: photos.iter().map(|photo| photo.path.clone()).collect(),
-            roots: roots.into_iter().collect(),
+            photos: photos.to_vec(),
+            libraries: libraries.into_iter().collect(),
             directory: None,
         };
 
@@ -42,7 +44,7 @@ impl FolderView {
 pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
     let shown = Rc::new(RefCell::new(Shown {
         photos: Vec::new(),
-        roots: Vec::new(),
+        libraries: Vec::new(),
         directory: None,
     }));
 
@@ -57,18 +59,26 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
             let mut listing = Vec::new();
 
             let Some(directory) = &shown.directory else {
-                for root in &shown.roots {
-                    listing.push(root.to_string_lossy());
+                let unsorted: BTreeSet<&PathBuf> = shown
+                    .photos
+                    .iter()
+                    .filter(|photo| photo.library.is_none())
+                    .map(|photo| &photo.path)
+                    .collect();
+
+                for path in shown.libraries.iter().chain(unsorted) {
+                    listing.push(path.to_string_lossy());
                 }
                 let listing: Vec<&str> = listing.iter().map(|path| path.as_ref()).collect();
                 entries.splice(0, entries.n_items(), &listing);
                 return;
             };
 
-            let mut folders = BTreeSet::new();
+            let in_library = shown.libraries.contains(directory);
+            let mut albums = BTreeSet::new();
             let mut photos = BTreeSet::new();
             for photo in &shown.photos {
-                let Ok(below) = photo.strip_prefix(directory) else {
+                let Ok(below) = photo.path.strip_prefix(directory) else {
                     continue;
                 };
 
@@ -77,15 +87,15 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
                     continue;
                 };
 
-                if components.next().is_some() {
-                    folders.insert(directory.join(first));
+                if in_library && components.next().is_some() {
+                    albums.insert(directory.join(first));
                 } else {
-                    photos.insert(photo.clone());
+                    photos.insert(photo.path.clone());
                 }
             }
 
             listing.push("..".into());
-            for path in folders.iter().chain(photos.iter()) {
+            for path in albums.iter().chain(photos.iter()) {
                 listing.push(path.to_string_lossy());
             }
             let listing: Vec<&str> = listing.iter().map(|path| path.as_ref()).collect();
@@ -93,7 +103,7 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
         }
     });
 
-    let level = Rc::new(Cell::new(FIRST_ICON_LEVEL));
+    let level = Rc::new(Cell::new(0));
     let requests = Rc::new(RefCell::new(HashMap::new()));
 
     let rows = gtk::SignalListItemFactory::new();
@@ -110,13 +120,7 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
                 .ellipsize(pango::EllipsizeMode::Middle)
                 .build();
 
-            let row = if level.get() < FIRST_ICON_LEVEL {
-                name.set_xalign(0.0);
-                gtk::Box::new(gtk::Orientation::Horizontal, 12)
-            } else {
-                gtk::Box::new(gtk::Orientation::Vertical, 6)
-            };
-
+            let row = gtk::Box::new(gtk::Orientation::Vertical, 6);
             row.append(&icon);
             row.append(&name);
             item.set_child(Some(&row));
@@ -147,11 +151,12 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
             if entry == ".." || path.is_dir() {
                 let folder_name = path.file_name().unwrap_or(path.as_os_str());
                 name.set_label(&folder_name.to_string_lossy());
+                name.set_visible(true);
                 icon.set_icon_name(Some("folder"));
                 return;
             }
 
-            name.set_label(&path.file_name().unwrap_or_default().to_string_lossy());
+            name.set_visible(false);
             icon.set_icon_name(Some("image-x-generic-symbolic"));
 
             let request = thumbnails.request(path.to_path_buf(), move |texture| {
@@ -190,7 +195,7 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
                     return;
                 };
 
-                if !shown.roots.contains(&directory) {
+                if !shown.libraries.contains(&directory) {
                     shown.directory = directory.parent().map(Path::to_path_buf);
                 }
             } else if Path::new(entry.as_str()).is_dir() {
@@ -215,11 +220,7 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
         let level = level.clone();
         move || {
             // A cell is its icon plus 20 px of padding and margin. 36 leaves a gap between icons.
-            let columns = if level.get() < FIRST_ICON_LEVEL {
-                1
-            } else {
-                (widget.width() / (ICON_SIZES[level.get()] + 36)).max(1) as u32
-            };
+            let columns = (widget.width() / (ICON_SIZES[level.get()] + 36)).max(1) as u32;
 
             // The minimum stays at one column so the window can always shrink.
             grid.set_max_columns(columns);
@@ -249,7 +250,7 @@ pub fn new(thumbnails: &thumbnail::Store) -> FolderView {
     pinch.connect_scale_changed(move |_, scale| {
         // Doubling the finger distance moves three levels.
         let pinched = level_at_start.get() as f64 + scale.log2() * 3.0;
-        let pinched = pinched.round().clamp(0.0, 5.0) as usize;
+        let pinched = pinched.round().clamp(0.0, (ICON_SIZES.len() - 1) as f64) as usize;
         if pinched == level.get() {
             return;
         }

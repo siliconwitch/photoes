@@ -145,7 +145,7 @@ fn main() -> glib::ExitCode {
         let show = move |inbox_only: bool| {
             let shown: Vec<library::Photo> = photos
                 .iter()
-                .filter(|photo| photo.unsorted || !inbox_only)
+                .filter(|photo| photo.library.is_none() == inbox_only)
                 .cloned()
                 .collect();
 

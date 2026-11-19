@@ -40,8 +40,8 @@ Use these terms in code, comments, docs and the interface. Never use a term from
 
 - **Sorted images are JPEG XL.** JPEG input is transcoded losslessly, so it converts back to the exact original bytes. Other formats are re-encoded.
 - **Sorted video is MP4.** H.264, HEVC and AV1 are remuxed, not re-encoded. Edits and other codecs encode to AV1 with Opus audio. Never assume a sorted `.mp4` is AV1.
-- **Each sorted file embeds a 512 px preview.** The grid draws tiles from it and never decodes a full file. Embedded, not cached, so a copied library draws at once.
-- **Metadata lives inside each file.** Images keep GPS, date and camera in Exif. AI text goes in XMP `dc:description`, the favourite in XMP `xmp:Rating`, and people names and edit settings in XMP. A metadata change never re-encodes pixels or streams.
+- **Each sorted file embeds a 512 px preview.** The grid draws a sorted photo's tile from it and never decodes the full file. Embedded, not cached, so a copied library draws at once.
+- **Metadata lives inside each file.** Images keep GPS, date and camera in Exif. AI text goes in XMP `dc:description`, the favourite in XMP `xmp:Rating`, and faces and edit settings in XMP. A metadata change never re-encodes pixels or streams.
 - **The edit panel previews on the GPU and encodes when the panel closes.** An encode takes seconds for an image and minutes for video. Preview and encode share the same correction maths, so the file matches the preview.
 
 ### Not decided
@@ -53,7 +53,7 @@ Ask the user before choosing any of these. Do not infer an answer from the code.
 - Whether the map gets a dark style, and whether libshumate stays, since its label widgets make zooming stutter.
 - Which fields hold the embedded preview, faces and people names, and which `xmp:Rating` value means favourite.
 - Where video keeps its GPS, date and camera details. MP4 has no Exif.
-- How staged work survives a crash, and how a write avoids a half-written file that looks finished.
+- How staged work survives a crash, and how the app tells a half-written sorted copy or edit from a finished one.
 - Which face model to use, and which AV1 encoder runs when the GPU has none.
 
 ## Commands

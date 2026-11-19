@@ -4,13 +4,13 @@ use gtk::glib;
 
 pub struct Config {
     pub library: Vec<PathBuf>,
-    pub inbox: Vec<PathBuf>,
+    pub inbox: Option<PathBuf>,
 }
 
 pub fn load() -> Config {
     let mut config = Config {
         library: Vec::new(),
-        inbox: Vec::new(),
+        inbox: None,
     };
 
     let text = std::fs::read_to_string(glib::user_config_dir().join("photoes/config"));
@@ -32,7 +32,7 @@ pub fn load() -> Config {
 
         match key.trim() {
             "library" => config.library.push(directory),
-            "inbox" => config.inbox.push(directory),
+            "inbox" => config.inbox = Some(directory),
             _ => {}
         }
     }

@@ -12,9 +12,9 @@ use crate::config::Config;
 #[derive(Clone)]
 pub struct Photo {
     pub path: PathBuf,
-    pub root: PathBuf,
+    // None while the photo is unsorted.
+    pub library: Option<PathBuf>,
     pub modified: SystemTime,
-    pub unsorted: bool,
     pub location: Option<(f64, f64)>,
 }
 
@@ -28,10 +28,13 @@ pub fn scan(config: &Config) -> Vec<Photo> {
 
     let mut photos = Vec::new();
 
-    let library = config.library.iter().map(|root| (root, false));
-    let inbox = config.inbox.iter().map(|root| (root, true));
-    for (root, unsorted) in library.chain(inbox) {
-        let mut pending = vec![root.clone()];
+    let libraries = config
+        .library
+        .iter()
+        .map(|library| (library, Some(library.clone())));
+    let inbox = config.inbox.iter().map(|inbox| (inbox, None));
+    for (start, library) in libraries.chain(inbox) {
+        let mut pending = vec![start.clone()];
         while let Some(directory) = pending.pop() {
             let Ok(entries) = std::fs::read_dir(&directory) else {
                 continue;
@@ -104,9 +107,8 @@ pub fn scan(config: &Config) -> Vec<Photo> {
 
                 photos.push(Photo {
                     path,
-                    root: root.clone(),
+                    library: library.clone(),
                     modified,
-                    unsorted,
                     location: latitude.zip(longitude),
                 });
             }
