@@ -1,5 +1,5 @@
 {
-  description = "Photoes, a fast, minimal, AI-first photos app for Linux";
+  description = "Photoes, a fast, minimal, AI-assisted photos app for Linux";
 
   inputs.nixpkgs.url = "github:NixOS/nixpkgs/nixos-unstable";
 
@@ -60,7 +60,7 @@
           '';
 
           meta = {
-            description = "Fast, minimal, AI-first photos app for Linux";
+            description = "Fast, minimal, AI-assisted photos app for Linux";
             homepage = "https://github.com/siliconwitch/photoes";
             license = nixpkgs.lib.licenses.gpl3Plus;
             mainProgram = "photoes";

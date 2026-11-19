@@ -1,7 +1,7 @@
 pkgname=photoes
 pkgver=0.1.0
 pkgrel=1
-pkgdesc='A fast, minimal, AI-first photos app for Linux'
+pkgdesc='A fast, minimal, AI-assisted photos app for Linux'
 arch=('x86_64' 'aarch64')
 url='https://github.com/siliconwitch/photoes'
 license=('GPL-3.0-or-later')

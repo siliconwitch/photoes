@@ -2,7 +2,7 @@
 name = "photoes"
 version = "0.1.0"
 edition = "2024"
-description = "A fast, minimal, AI-first photos app for Linux"
+description = "A fast, minimal, AI-assisted photos app for Linux"
 license = "GPL-3.0-or-later"
 repository = "https://github.com/siliconwitch/photoes"
 
